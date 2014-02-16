@@ -81,10 +81,8 @@ public class HeatMapBuilderBolt extends BaseBasicBolt {
 
 	private List<LocationDTO> getCheckinsForInterval(Long timeInterval, String city) {
 		List<LocationDTO> hotzones = heatmaps.get(timeInterval);
-		if (hotzones == null) {
-			hotzones = new ArrayList<LocationDTO>();
-			heatmaps.put(city+"@"+timeInterval, hotzones);
-		}
+		if (hotzones == null) 
+			heatmaps.put(city+"@"+timeInterval, new ArrayList<LocationDTO>());
 		return hotzones;
 	}
 }
