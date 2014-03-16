@@ -2,3 +2,6 @@ target
 .classpath
 .settings
 .project
+/heatmap_logback_2014-02-16.log
+/heatmap_logback_2014-02-17.log
+/heatmap_logback_2014-03-15.log
