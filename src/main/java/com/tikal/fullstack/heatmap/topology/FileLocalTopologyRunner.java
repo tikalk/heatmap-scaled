@@ -12,28 +12,29 @@ import com.tikal.fullstack.heatmap.topology.bolts.PersistorBolt;
 import com.tikal.fullstack.heatmap.topology.spouts.CheckinsSpout;
 
 public class FileLocalTopologyRunner {
-	public static void main(String[] args) {
-		int intervalWindow = 2;
-		int emitInterval = 3;
+	public static void main(final String[] args) {
+		final int intervalWindow = 2;
+		final int emitInterval = 3;
 
-		TopologyBuilder builder = buildTopolgy(intervalWindow, emitInterval);
+		final TopologyBuilder builder = buildTopolgy(intervalWindow, emitInterval);
+		
 
 
-		Config config = new Config();
+		final Config config = new Config();
 		config.setDebug(false);
 
-		LocalCluster localCluster = new LocalCluster();
+		final LocalCluster localCluster = new LocalCluster();
 		localCluster.submitTopology("local-heatmap", config, builder.createTopology());
 	}
 
-	private static TopologyBuilder buildTopolgy(int intervalWindow, int emitInterval) {
+	private static TopologyBuilder buildTopolgy(final int intervalWindow, final int emitInterval) {
 		
 		
-		Config heatmapConfig = new Config();
+		final Config heatmapConfig = new Config();
 		heatmapConfig.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, emitInterval);
 		heatmapConfig.put("interval-window", intervalWindow);
 		
-		TopologyBuilder builder = new TopologyBuilder();
+		final TopologyBuilder builder = new TopologyBuilder();
 
 		builder.setSpout("checkins", new CheckinsSpout());
 		
