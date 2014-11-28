@@ -58,10 +58,9 @@ public class LocalTopologyRunner {
 		builder.setSpout("checkins", new KafkaSpout(kafkaConfig), 4);
 
 		builder.setBolt("geocode-lookup", new GeocodeLookupBolt(), 8).setNumTasks(64).shuffleGrouping("checkins");
-		builder.setBolt("heatmap-builder", new HeatMapBuilderBolt(), 4).fieldsGrouping("geocode-lookup",
-				new Fields("city")).addConfigurations(heatmapConfig );
+		builder.setBolt("heatmap-builder", new HeatMapBuilderBolt(), 4).fieldsGrouping("geocode-lookup",new Fields("city")).addConfigurations(heatmapConfig );
 		builder.setBolt("persistor", new PersistorBolt(), 2).setNumTasks(4).shuffleGrouping("heatmap-builder");
-		 builder.setBolt("kafkaProducer", new KafkaOutputBolt("localhost:9092","kafka.serializer.StringEncoder","locations-topic"), 2).setNumTasks(4).shuffleGrouping("persistor");
+		builder.setBolt("kafkaProducer", new KafkaOutputBolt("localhost:9092","kafka.serializer.StringEncoder","locations-topic"), 2).setNumTasks(4).shuffleGrouping("persistor");
 		
 //		builder.setBolt("indexer", new IndexerBolt(solrAddress), 1).setNumTasks(4).shuffleGrouping("persistor");
 		return builder;
