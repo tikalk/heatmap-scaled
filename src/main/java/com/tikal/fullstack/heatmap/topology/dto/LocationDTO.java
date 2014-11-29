@@ -1,6 +1,11 @@
 package com.tikal.fullstack.heatmap.topology.dto;
 
+import java.io.IOException;
+
+import org.codehaus.jackson.map.ObjectMapper;
+
 public class LocationDTO {
+	private static ObjectMapper om= new ObjectMapper();
 	private float lat;
 	private float lon;
 	private String title;
@@ -9,7 +14,7 @@ public class LocationDTO {
 	public LocationDTO() {
 	}
 
-	public LocationDTO(float lat, float lon, String title,String city) {
+	public LocationDTO(final float lat, final float lon, final String title,final String city) {
 		this.lat = lat;
 		this.lon = lon;
 		this.title = title;
@@ -20,7 +25,7 @@ public class LocationDTO {
 		return lat;
 	}
 
-	public void setLat(float lat) {
+	public void setLat(final float lat) {
 		this.lat = lat;
 	}
 
@@ -28,7 +33,7 @@ public class LocationDTO {
 		return lon;
 	}
 
-	public void setLon(float lon) {
+	public void setLon(final float lon) {
 		this.lon = lon;
 	}
 
@@ -36,7 +41,7 @@ public class LocationDTO {
 		return title;
 	}
 
-	public void setTitle(String title) {
+	public void setTitle(final String title) {
 		this.title = title;
 	}
 
@@ -44,8 +49,17 @@ public class LocationDTO {
 		return city;
 	}
 
-	public void setCity(String city) {
+	public void setCity(final String city) {
 		this.city = city;
+	}
+
+	@Override
+	public String toString() {
+		try {
+			return om.writeValueAsString(this);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	

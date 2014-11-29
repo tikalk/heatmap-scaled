@@ -25,24 +25,24 @@ public class PersistorBolt extends BaseBasicBolt {
 	private ObjectMapper objectMapper;
 
 	@Override
-	public void prepare(Map stormConf, TopologyContext context) {
+	public void prepare(final Map stormConf, final TopologyContext context) {
 		jedis = new Jedis("localhost");
 		objectMapper = new ObjectMapper();
 	}
 
 	@Override
-	public void execute(Tuple tuple, BasicOutputCollector outputCollector) {
-		Long timeInterval = tuple.getLongByField("time-interval");
-		String city = tuple.getStringByField("city");
-		List<LocationDTO> locationsList = (List<LocationDTO>) tuple.getValueByField("locationsList");
+	public void execute(final Tuple tuple, final BasicOutputCollector outputCollector) {
+		final Long timeInterval = tuple.getLongByField("time-interval");
+		final String city = tuple.getStringByField("city");
+		final List<LocationDTO> locationsList = (List<LocationDTO>) tuple.getValueByField("locationsList");
 		try {
-			String dbKey = "checkins-" + timeInterval+"@"+city;
-			String value = objectMapper.writeValueAsString(locationsList);
+			final String dbKey = "checkins-" + timeInterval+"@"+city;
+			final String value = objectMapper.writeValueAsString(locationsList);
 			logger.info("*****************************"+dbKey+" : "+value);
 			jedis.set(dbKey, value);
 			jedis.publish("location-key", dbKey);
-			outputCollector.emit(new Values(dbKey,locationsList));
-		} catch (Exception e) {
+			outputCollector.emit(new Values(dbKey,locationsList.toString()));
+		} catch (final Exception e) {
 			logger.error("Error persisting for time: " + timeInterval, e);
 		}
 	}
@@ -54,7 +54,7 @@ public class PersistorBolt extends BaseBasicBolt {
 	}
 
 	@Override
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+	public void declareOutputFields(final OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("dbKey","locationsList"));
 	}
 }

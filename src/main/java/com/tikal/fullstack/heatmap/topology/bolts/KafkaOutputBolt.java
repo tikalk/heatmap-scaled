@@ -15,34 +15,35 @@ import backtype.storm.tuple.Tuple;
 public class KafkaOutputBolt extends BaseRichBolt{
 
 	private Producer<String, String> producer;
-	private String metadataBrokerList, serializerClass, topic;
+	private final String metadataBrokerList, serializerClass, topic;
 	
-	public KafkaOutputBolt(String metadataBrokerList, String serializerClass, String topic) {
+	public KafkaOutputBolt(final String metadataBrokerList, final String serializerClass, final String topic) {
 		this.metadataBrokerList = metadataBrokerList;
 		this.serializerClass = serializerClass;
 		this.topic = topic;
 	}
 
 	@Override
-	public void prepare(Map stormConf, TopologyContext context,OutputCollector collector) {
-		Properties props = new Properties();
+	public void prepare(final Map stormConf, final TopologyContext context,final OutputCollector collector) {
+		final Properties props = new Properties();
 		props.put("metadata.broker.list", metadataBrokerList);
 		props.put("serializer.class", serializerClass);
-		ProducerConfig config = new ProducerConfig(props);
+		final ProducerConfig config = new ProducerConfig(props);
 		producer = new Producer<String, String>(config);
 		
 	}
 
 	@Override
-	public void execute(Tuple tuple) {
-		String dbKey = tuple.getStringByField("dbKey");
-		KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, dbKey);
+	public void execute(final Tuple tuple) {
+		final String dbKey = tuple.getStringByField("dbKey");
+		final String locationsList = tuple.getStringByField("locationsList");
+		final KeyedMessage<String, String> data = new KeyedMessage<String, String>(topic, dbKey,locationsList);
 		producer.send(data);
 		
 	}
 
 	@Override
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+	public void declareOutputFields(final OutputFieldsDeclarer declarer) {
 		
 	}
 	
