@@ -9,6 +9,8 @@ import backtype.storm.tuple.Fields;
 import com.tikal.fullstack.heatmap.topology.bolts.GeocodeLookupBolt;
 import com.tikal.fullstack.heatmap.topology.bolts.HeatMapBuilderBolt;
 import com.tikal.fullstack.heatmap.topology.bolts.PersistorBolt;
+import com.tikal.fullstack.heatmap.topology.locatorservice.impl.MockLocatorService;
+import com.tikal.fullstack.heatmap.topology.locatorservice.impl.RedisLocatorService;
 import com.tikal.fullstack.heatmap.topology.spouts.CheckinsSpout;
 
 public class FileLocalTopologyRunner {
@@ -39,7 +41,7 @@ public class FileLocalTopologyRunner {
 		builder.setSpout("checkins", new CheckinsSpout());
 		
 
-		builder.setBolt("geocode-lookup", new GeocodeLookupBolt(), 8).setNumTasks(64).shuffleGrouping("checkins");
+		builder.setBolt("geocode-lookup", new GeocodeLookupBolt(), 8).setNumTasks(64).shuffleGrouping("checkins").addConfiguration("locatorService", new RedisLocatorService().getClass().getName());
 		builder.setBolt("heatmap-builder", new HeatMapBuilderBolt(), 4).fieldsGrouping("geocode-lookup",
 				new Fields("city")).addConfigurations(heatmapConfig );
 		builder.setBolt("persistor", new PersistorBolt(), 2).setNumTasks(4).shuffleGrouping("heatmap-builder");

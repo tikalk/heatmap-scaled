@@ -12,7 +12,6 @@ import backtype.storm.tuple.Values;
 
 import com.tikal.fullstack.heatmap.topology.dto.LocationDTO;
 import com.tikal.fullstack.heatmap.topology.locatorservice.LocatorService;
-import com.tikal.fullstack.heatmap.topology.locatorservice.impl.RedisLocatorService;
 
 public class GeocodeLookupBolt extends BaseBasicBolt {
 	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(GeocodeLookupBolt.class);
@@ -25,8 +24,11 @@ public class GeocodeLookupBolt extends BaseBasicBolt {
 
 	@Override
 	public void prepare(final Map stormConf, final TopologyContext context) {
-//		locatorService = new GoogleLocatorService();
-		locatorService = new RedisLocatorService();
+		try {
+			locatorService = (LocatorService) Class.forName((String) stormConf.get("locatorService")).getConstructor().newInstance();
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override

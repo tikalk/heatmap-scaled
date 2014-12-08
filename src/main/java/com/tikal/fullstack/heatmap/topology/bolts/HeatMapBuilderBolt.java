@@ -25,61 +25,61 @@ public class HeatMapBuilderBolt extends BaseBasicBolt {
 	private long intervalWindow;
 
 	@Override
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+	public void declareOutputFields(final OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("time-interval", "city","locationsList"));
 	}
 
 	@Override
-	public void prepare(Map stormConf, TopologyContext context) {
+	public void prepare(final Map stormConf, final TopologyContext context) {
 		heatmaps = new HashMap<String, List<LocationDTO>>();
 		intervalWindow = (long) stormConf.get("interval-window");
 	}
 
 
 	@Override
-	public void execute(Tuple tuple, BasicOutputCollector outputCollector) {
+	public void execute(final Tuple tuple, final BasicOutputCollector outputCollector) {
 		if (isTickTuple(tuple)) {
 			emitHeatmap(outputCollector);
 		} else {
-			Long time = tuple.getLongByField("time");
-			LocationDTO locationDTO = (LocationDTO) tuple.getValueByField("location");
+			final Long time = tuple.getLongByField("time");
+			final LocationDTO locationDTO = (LocationDTO) tuple.getValueByField("location");
 			
-			Long timeInterval = selectTimeInterval(time);			
-			List<LocationDTO> locationsList = getCheckinsForInterval(timeInterval,locationDTO.getCity());
+			final Long timeInterval = selectTimeInterval(time);			
+			final List<LocationDTO> locationsList = getCheckinsForInterval(timeInterval,locationDTO.getCity());
 			locationsList.add(locationDTO);
 		}
 	}
 
-	private boolean isTickTuple(Tuple tuple) {
-		String sourceComponent = tuple.getSourceComponent();
-		String sourceStreamId = tuple.getSourceStreamId();
+	private boolean isTickTuple(final Tuple tuple) {
+		final String sourceComponent = tuple.getSourceComponent();
+		final String sourceStreamId = tuple.getSourceStreamId();
 		return sourceComponent.equals(Constants.SYSTEM_COMPONENT_ID)
 				&& sourceStreamId.equals(Constants.SYSTEM_TICK_STREAM_ID);
 	}
 
-	private void emitHeatmap(BasicOutputCollector outputCollector) {
-		Long now = System.currentTimeMillis();
-		Long emitUpToTimeInterval = selectTimeInterval(now);
-		Set<String> timeIntervalsAvailableWithCityToRemove = new HashSet<>();
-		Set<String> timeIntervalsAvailableWithCity = heatmaps.keySet();
-		for (String timeIntervalWithCity : timeIntervalsAvailableWithCity) {
-			String city = timeIntervalWithCity.split("@")[0];
-			long timeInterval = Long.valueOf(timeIntervalWithCity.split("@")[1]);
+	private void emitHeatmap(final BasicOutputCollector outputCollector) {
+		final Long now = System.currentTimeMillis();
+		final Long emitUpToTimeInterval = selectTimeInterval(now);
+		final Set<String> timeIntervalsAvailableWithCityToRemove = new HashSet<>();
+		final Set<String> timeIntervalsAvailableWithCity = heatmaps.keySet();
+		for (final String timeIntervalWithCity : timeIntervalsAvailableWithCity) {
+			final String city = timeIntervalWithCity.split("@")[0];
+			final long timeInterval = Long.valueOf(timeIntervalWithCity.split("@")[1]);
 			if (timeInterval <= emitUpToTimeInterval) {
 				timeIntervalsAvailableWithCityToRemove.add(timeIntervalWithCity);
-				List<LocationDTO> hotzones = heatmaps.get(timeIntervalWithCity);
+				final List<LocationDTO> hotzones = heatmaps.get(timeIntervalWithCity);
 				outputCollector.emit(new Values(timeInterval,city, hotzones));
 			}
 		}
-		for (String key : timeIntervalsAvailableWithCityToRemove) 
+		for (final String key : timeIntervalsAvailableWithCityToRemove) 
 			heatmaps.remove(key);
 	}
 
-	private Long selectTimeInterval(Long time) {
+	private Long selectTimeInterval(final Long time) {
 		return time / (intervalWindow * 1000);
 	}
 
-	private List<LocationDTO> getCheckinsForInterval(Long timeInterval, String city) {
+	private List<LocationDTO> getCheckinsForInterval(final Long timeInterval, final String city) {
 		List<LocationDTO> hotzones = heatmaps.get(timeInterval);
 		if (hotzones == null) {
 			hotzones = new ArrayList<LocationDTO>();

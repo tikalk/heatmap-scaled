@@ -1,13 +1,16 @@
 package com.tikal.fullstack.heatmap.topology;
 
+import java.io.IOException;
 import java.util.Properties;
+
+import org.codehaus.jackson.map.ObjectMapper;
 
 import storm.kafka.KafkaSpout;
 import storm.kafka.SpoutConfig;
 import storm.kafka.StringScheme;
 import storm.kafka.ZkHosts;
 import storm.kafka.bolt.KafkaBolt;
-import storm.kafka.bolt.mapper.FieldNameBasedTupleToKafkaMapper;
+import storm.kafka.bolt.mapper.TupleToKafkaMapper;
 import storm.kafka.bolt.selector.DefaultTopicSelector;
 import storm.kafka.trident.TridentKafkaState;
 import backtype.storm.Config;
@@ -15,16 +18,16 @@ import backtype.storm.LocalCluster;
 import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Tuple;
 
 import com.tikal.fullstack.heatmap.topology.bolts.GeocodeLookupBolt;
 import com.tikal.fullstack.heatmap.topology.bolts.HeatMapBuilderBolt;
-import com.tikal.fullstack.heatmap.topology.bolts.KafkaOutputBolt;
-import com.tikal.fullstack.heatmap.topology.bolts.PersistorBolt;
-import com.tikal.fullstack.heatmap.topology.locatorservice.impl.RedisLocatorService;
+import com.tikal.fullstack.heatmap.topology.locatorservice.impl.MockLocatorService;
 
 
-public class LocalTopologyRunner {
-	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LocalTopologyRunner.class);
+public class WorkshopTopologyRunner {
+	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WorkshopTopologyRunner.class);
+	private static ObjectMapper objectMapper = new ObjectMapper();
 	public static void main(final String[] args) {
 		final int intervalWindow = 2;
 		final int emitInterval = 3;
@@ -58,17 +61,18 @@ public class LocalTopologyRunner {
 		final Config heatmapConfig = new Config();
 		heatmapConfig.put(Config.TOPOLOGY_TICK_TUPLE_FREQ_SECS, emitInterval);
 		heatmapConfig.put("interval-window", intervalWindow);
+
 		
 		final TopologyBuilder builder = new TopologyBuilder();
 
 //		builder.setSpout("checkins", new Checkins());
 		builder.setSpout("checkins", new KafkaSpout(kafkaConfig), 4);
 
-		builder.setBolt("geocode-lookup", new GeocodeLookupBolt(), 8).setNumTasks(64).shuffleGrouping("checkins").addConfiguration("locatorService", new RedisLocatorService().getClass().getName());
+		builder.setBolt("geocode-lookup", new GeocodeLookupBolt(), 8).setNumTasks(64).shuffleGrouping("checkins").addConfiguration("locatorService", new MockLocatorService().getClass().getName());
 		builder.setBolt("heatmap-builder", new HeatMapBuilderBolt(), 4).fieldsGrouping("geocode-lookup",new Fields("city")).addConfigurations(heatmapConfig );
-		builder.setBolt("persistor", new PersistorBolt(), 2).setNumTasks(4).shuffleGrouping("heatmap-builder");
+//		builder.setBolt("persistor", new PersistorBolt(), 2).setNumTasks(4).shuffleGrouping("heatmap-builder");
 //		builder.setBolt("kafkaProducer", new KafkaOutputBolt("localhost:9092","kafka.serializer.StringEncoder","locations-topic"), 2).setNumTasks(4).shuffleGrouping("persistor");
-		builder.setBolt("kafkaProducer",getKafkaBolt(),2).setNumTasks(4).shuffleGrouping("persistor").addConfigurations(getKafkaBoltConfig());
+		builder.setBolt("kafkaProducer",getKafkaBolt(),2).setNumTasks(4).shuffleGrouping("heatmap-builder").addConfigurations(getKafkaBoltConfig());
 		
 
 		return builder;
@@ -77,8 +81,23 @@ public class LocalTopologyRunner {
 	private static KafkaBolt<String, String> getKafkaBolt() {
 		return new KafkaBolt<String,String>()
 		.withTopicSelector(new DefaultTopicSelector("locations-topic"))
-		.withTupleToKafkaMapper(new FieldNameBasedTupleToKafkaMapper<String, String>("dbKey","locationsList"));
+		.withTupleToKafkaMapper(new TupleToKafkaMapper<String, String>() {			
+			@Override
+			public String getMessageFromTuple(final Tuple tuple) {
+				try {
+					return objectMapper.writeValueAsString(tuple.getValueByField("locationsList"));
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
+			}			
+			@Override
+			public String getKeyFromTuple(final Tuple tuple) {
+				return "checkins-" +tuple.getLongByField("time-interval")+"@"+tuple.getStringByField("city");				
+			}
+		});
 	}
+	
+	
 
 	private static SpoutConfig getSoutConfig(final String kafkaTopicName, final String zkHosts) {
 		final SpoutConfig kafkaConfig = new SpoutConfig(new ZkHosts(zkHosts), kafkaTopicName, "", "storm");
