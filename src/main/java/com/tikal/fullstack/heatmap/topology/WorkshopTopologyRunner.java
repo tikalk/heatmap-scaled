@@ -85,7 +85,8 @@ public class WorkshopTopologyRunner {
 			@Override
 			public String getMessageFromTuple(final Tuple tuple) {
 				try {
-					return objectMapper.writeValueAsString(tuple.getValueByField("locationsList"));
+					final String key = "checkins-" +tuple.getLongByField("time-interval")+"@"+tuple.getStringByField("city");
+					return key+"="+objectMapper.writeValueAsString(tuple.getValueByField("locationsList"));
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
