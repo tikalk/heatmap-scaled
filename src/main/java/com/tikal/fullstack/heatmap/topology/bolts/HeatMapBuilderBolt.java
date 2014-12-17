@@ -1,6 +1,7 @@
 package com.tikal.fullstack.heatmap.topology.bolts;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +21,7 @@ import backtype.storm.tuple.Values;
 import com.tikal.fullstack.heatmap.topology.dto.LocationDTO;
 
 public class HeatMapBuilderBolt extends BaseBasicBolt {
+	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(HeatMapBuilderBolt.class);
 	private Map<String, List<LocationDTO>> heatmaps;
 	
 	private long intervalWindow;
@@ -68,7 +70,9 @@ public class HeatMapBuilderBolt extends BaseBasicBolt {
 			if (timeInterval <= emitUpToTimeInterval) {
 				timeIntervalsAvailableWithCityToRemove.add(timeIntervalWithCity);
 				final List<LocationDTO> hotzones = heatmaps.get(timeIntervalWithCity);
-				outputCollector.emit(new Values(timeInterval,city, hotzones));
+				final Values values = new Values(timeInterval,city, hotzones);
+				logger.debug("Emit:"+values);
+				outputCollector.emit(values);
 			}
 		}
 		for (final String key : timeIntervalsAvailableWithCityToRemove) 
@@ -80,7 +84,7 @@ public class HeatMapBuilderBolt extends BaseBasicBolt {
 	}
 
 	private List<LocationDTO> getCheckinsForInterval(final Long timeInterval, final String city) {
-		List<LocationDTO> hotzones = heatmaps.get(timeInterval);
+		List<LocationDTO> hotzones = heatmaps.get(city+"@"+timeInterval);
 		if (hotzones == null) {
 			hotzones = new ArrayList<LocationDTO>();
 			heatmaps.put(city+"@"+timeInterval, hotzones);

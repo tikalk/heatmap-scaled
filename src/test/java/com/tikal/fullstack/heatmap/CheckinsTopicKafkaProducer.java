@@ -16,14 +16,14 @@ public class CheckinsTopicKafkaProducer {
 	
 	public static void main(final String[] args) throws InterruptedException {
 		final Producer<String, String> producer = createProducer();
-		
-		for(;true;Thread.sleep(1000)){
+		for (int i = 0; i < 50; i++) {
 			final String msg = new Date().getTime()+sampleAddress;
 			logger.debug("Sending {}...",msg);
             producer.send(new KeyedMessage<String, String>(topicName,msg));
+            Thread.sleep(100);
 		}
 
-//		producer.close();
+		producer.close();
 	}
 
 	private static Producer<String, String> createProducer() {
