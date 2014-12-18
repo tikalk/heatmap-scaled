@@ -16,7 +16,7 @@ public class CheckinsTopicKafkaProducer {
 	
 	public static void main(final String[] args) throws InterruptedException {
 		final Producer<String, String> producer = createProducer();
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 5000; i++) {
 			final String msg = new Date().getTime()+sampleAddress;
 			logger.debug("Sending {}...",msg);
             producer.send(new KeyedMessage<String, String>(topicName,msg));

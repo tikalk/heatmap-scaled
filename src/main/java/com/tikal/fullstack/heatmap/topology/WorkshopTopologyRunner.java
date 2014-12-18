@@ -29,8 +29,8 @@ public class WorkshopTopologyRunner {
 	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(WorkshopTopologyRunner.class);
 	private static ObjectMapper objectMapper = new ObjectMapper();
 	public static void main(final String[] args) {
-		final int intervalWindow = 2;
-		final int emitInterval = 3;
+		final int intervalWindow = 1;
+		final int emitInterval = 2;
 		
 		final String zkHosts = "localhost";
 		final String kafkaTopicName="checkinsTopic";
