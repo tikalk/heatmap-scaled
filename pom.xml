@@ -119,10 +119,10 @@
         </plugins>
     </build>
 
-    <!--<repositories>
+    <repositories>
         <repository>
             <id>clojars.org</id>
             <url>http://clojars.org/repo</url>
         </repository>
-    </repositories>-->
+    </repositories>
 </project>
